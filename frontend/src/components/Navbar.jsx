@@ -44,7 +44,7 @@ const Navbar = () => {
         </div>
         <img onClick={()=>setVisible(true)} src={assets.menu_icon} alt="menu icon problem" className='block sm:hidden w-5 cursor-pointer h-5 mt-4'/>
       </div>
-      <div className={`absolute top-0 h-screen right-0 transition-all overflow-auto bg-[#E1EEBC] ${visible? 'w-full' : 'w-0'}`}>
+      <div className={`absolute top-0 h-screen right-0 transition-all mobile-side overflow-auto bg-[#E1EEBC] ${visible? 'w-full' : 'w-0'}`}>
                 <div className='flex flex-col text-gray-600'>
                         <div onClick={()=>setVisible(false)} className='flex gap-4 p-3 items-center cursor-pointer'>
                           <img src={assets.dropdown_icon} alt="back icon problem" className='h-4 rotate-180' />

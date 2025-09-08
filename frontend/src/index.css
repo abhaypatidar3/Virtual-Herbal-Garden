@@ -7,7 +7,7 @@ a.active hr{
 }
 
 @media (max-width:640px) {
-    a.active{
+    .mobile-side a.active{
       background-color: black;
       color: white;
     }
