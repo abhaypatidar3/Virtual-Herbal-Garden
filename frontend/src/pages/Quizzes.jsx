@@ -2,8 +2,8 @@ import React from 'react'
 
 const Quizzes = () => {
   return (
-    <div>
-      Quizzez here
+    <div className='bg-[#E1EEBC] h-[100vh]'>
+      
     </div>
   )
 }

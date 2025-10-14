@@ -3,7 +3,7 @@ import React from 'react'
 const ExpPlantsHero = () => {
   return (
     <div className={`w-[100vw] bg-[url('src/assets/expPlants.jpg')] h-screen bg-cover bg-center border border-t-black`}>
-      <div className='text-[60px] sm:text-[70px] font-itim text-[#306203] mt-[6vh] mr-[4vw] flex justify-center w-full mb-[30px]'>
+      <div className='text-[60px] sm:text-[70px] font-itim text-[#306203] mt-[6vh] mr-[4vw] flex justify-center text-center w-full mb-[30px]'>
         <h1>Explore Plants</h1>
       </div>
       <div className=' h-[50vh] w-[80vw] sm:w-[50vw] rounded-3xl mx-[10vw] sm:mx-[25vw] my-[2vh]'>

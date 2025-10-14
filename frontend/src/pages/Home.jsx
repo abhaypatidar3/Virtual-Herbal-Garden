@@ -5,7 +5,7 @@ import ExpPlantsHero from '../components/ExpPlantsHero'
 
 const Home = () => {
   return (
-    <div>
+    <div className='overflow-x-hidden'>
       <Ayush/>
       <OurMission/>
       <ExpPlantsHero/>
