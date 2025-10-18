@@ -4,6 +4,8 @@ import { BrowserRouter } from 'react-router-dom'
 import { Auth0Provider } from '@auth0/auth0-react';
 import './index.css'
 import App from './App.jsx'
+import PlantContextProvider from './context/PlantContext.jsx';
+
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -15,7 +17,9 @@ createRoot(document.getElementById('root')).render(
           redirect_uri: window.location.origin
           }}
       >
-        <App />
+        <PlantContextProvider>
+          <App/>
+        </PlantContextProvider>
       </Auth0Provider>
     </BrowserRouter>
   </StrictMode>

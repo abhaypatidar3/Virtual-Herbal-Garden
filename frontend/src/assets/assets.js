@@ -13,6 +13,8 @@ import menu_icon from './menu_icon.png'
 import razorpay_logo from './razorpay_logo.png'
 import stripe_logo from './stripe_logo.png'
 import cross_icon from './cross_icon.png'
+import bookmark from './bookmark.png'
+import bookmarked from './bookmarked.png'
 
 export const assets = {
     logo,
@@ -29,5 +31,7 @@ export const assets = {
     menu_icon,
     razorpay_logo,
     stripe_logo,
-    cross_icon
+    cross_icon,
+    bookmark,
+    bookmarked
 }
