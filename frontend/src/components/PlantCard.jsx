@@ -1,9 +1,9 @@
 import React from 'react'
 import { assets } from '../assets/assets'
-
+import { Link } from 'react-router-dom';
 const PlantCard = (props) => {
   return (
-    <div className='w-[30vh] h-[33vh] sm:w-[36vh] sm:h-[39vh] border border-[#008080] flex flex-col justify-center rounded-3xl mb-[2vw] bg-white hover:scale-105 duration-150 hover:shadow-[0_0_20px_2px_rgba(0,128,128,0.4)] hover:border-[#00a0a0]'>
+    <Link to={`/plantinfo/${props.id}`} className='w-[30vh] h-[33vh] sm:w-[36vh] sm:h-[39vh] border border-[#008080] flex flex-col justify-center rounded-3xl mb-[2vw] bg-white hover:scale-105 duration-150 hover:shadow-[0_0_20px_2px_rgba(0,128,128,0.4)] hover:border-[#00a0a0]'>
         <div className='ml-[2.3vh] sm:ml-[1.5vw]'>
             <img src={props.image} className='bg-slate-500 h-[22vh] sm:h-[27vh] w-[25vh] sm:w-[30vh] rounded-3xl border border-gray-400' />
         </div>
@@ -14,7 +14,7 @@ const PlantCard = (props) => {
           </div>
           <img src={assets.bookmark} className='w-5 h-5 mt-7 mr-7 cursor-pointer' alt="bookmark image" />
         </div>
-    </div>
+    </Link>
   )
 }
 

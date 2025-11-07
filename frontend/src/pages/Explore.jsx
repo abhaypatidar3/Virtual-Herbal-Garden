@@ -22,7 +22,7 @@ const Explore = () => {
       <div className='border bg-[#EAFFD8] border-gray-400 mx-[5vw] h-[100vh] overflow-y-auto grid grid-col-1 sm:grid-cols-2 md:grid-cols-3 scrollbar-hide lg:grid-cols-4 pt-[3vh] sm:pt-[5vh] justify-center sm:px-0 gap-[2vh] sm:pl-[4vw] rounded-2xl'>
          {
            plants.map((plant,index)=>(
-            <PlantCard name={plant.name} SN={plant.scientific_name} key={index} image={plant.images.title || plant.images.thumb}/>
+            <PlantCard name={plant.name} SN={plant.scientific_name} key={index} image={plant.images.title || plant.images.thumb} id={plant._id}/>
            ))
          }
       </div>

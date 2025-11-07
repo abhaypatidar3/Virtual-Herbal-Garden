@@ -9,6 +9,7 @@ import Explore from './pages/Explore'
 import MyGarden from './pages/MyGarden'
 import Quizzes from './pages/Quizzes'
 import MyProfile from './pages/MyProfile'
+import PlantInfo from './pages/PlantInfo'
 
 function App() {
 
@@ -26,6 +27,7 @@ function App() {
           <Route path='/login' element={<Login/>} />
           <Route path='/about' element={<About/>} />
           <Route path='/myprofile' element={<MyProfile/>} />
+          <Route path='/plantinfo/:plantId' element={<PlantInfo/>} />
         </Routes>
       </div>
     </>

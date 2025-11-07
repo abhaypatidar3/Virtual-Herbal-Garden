@@ -1,19 +1,41 @@
 import express from "express";
-import { checkJwt } from "../middlewares/auth0Middleware.js";
 
+import {
+  getMe,
+  registerUser,
+  loginUser,
+  logoutUser,
+} from "../controllers/AuthController.js";
+
+import { verifyToken, authorizeRoles } from "../middleware/AuthMiddleware.js";
+
+// import upload from "../config/cloudinaryConfig.js";
 const router = express.Router();
 
-// ✅ Public route (no login required)
-router.get("/public", (req, res) => {
-  res.json({ message: "✅ Public route, no login required" });
-});
+// Register
+router.post("/register", registerUser);
 
-// 🔒 Protected route (login required)
-router.get("/protected", checkJwt, (req, res) => {
-  res.json({
-    message: "🔒 Protected route, only with Auth0 token",
-    user: req.auth, // user info decoded from token
-  });
-});
+// Login
+router.post("/login", loginUser);
+
+// Logout
+router.get("/logout", logoutUser);
+
+// GET /api/auth/me
+router.get("/me", verifyToken, getMe);
+//logout
+
+
+
+
+// Protected test route
+router.get(
+  "/protected",
+  verifyToken,
+  authorizeRoles("super-admin"),
+  (req, res) => {
+    res.json({ message: `Welcome ${req.user.role}, you're authorized.` });
+  }
+);
 
 export default router;
