@@ -31,6 +31,12 @@ const userSchema = new mongoose.Schema({
   profilePic: {
     type: String,
   },
+  bookmarks: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Plant", // references the Plant model
+    },
+  ],
 });
 
 // Hash password before saving
@@ -47,13 +53,9 @@ userSchema.methods.comparePassword = async function (enteredPassword) {
 
 // Generate JWT token
 userSchema.methods.getJWTToken = function () {
-  return jwt.sign(
-    { id: this._id, role: this.role },
-    process.env.JWT_SECRET,
-    {
-      expiresIn: process.env.JWT_EXPIRE || "1d",
-    }
-  );
+  return jwt.sign({ id: this._id, role: this.role }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRE || "1d",
+  });
 };
 
 const User = mongoose.model("User", userSchema);
