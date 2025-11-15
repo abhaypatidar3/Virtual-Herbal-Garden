@@ -1,3 +1,4 @@
+// src/routes/authRoutes.js
 import express from "express";
 
 import {
@@ -9,7 +10,6 @@ import {
 
 import { verifyToken, authorizeRoles } from "../middleware/AuthMiddleware.js";
 
-// import upload from "../config/cloudinaryConfig.js";
 const router = express.Router();
 
 // Register
@@ -18,17 +18,13 @@ router.post("/register", registerUser);
 // Login
 router.post("/login", loginUser);
 
-// Logout
-router.get("/logout", logoutUser);
+// Logout -> use POST so frontend can call POST /api/auth/logout
+router.post("/logout", logoutUser);
 
 // GET /api/auth/me
 router.get("/me", verifyToken, getMe);
-//logout
 
-
-
-
-// Protected test route
+// Protected test route (example)
 router.get(
   "/protected",
   verifyToken,

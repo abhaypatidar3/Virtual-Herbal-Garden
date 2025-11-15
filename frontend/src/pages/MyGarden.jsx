@@ -1,81 +1,163 @@
-import React, { useEffect, useState } from "react";
+// src/pages/MyGarden.jsx
+import React, { useContext, useMemo } from "react";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { PlantContext } from "../context/PlantContext";
+import PlantCard from "../components/PlantCard";
 
 const MyGarden = () => {
-  const [plants, setPlants] = useState([]);
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useSelector((state) => state.user);
+  
+  const { 
+    plants = [], 
+    bookmark = {}, 
+    loading, 
+    bookmarksLoading,
+    error, 
+    addToBookmark, 
+    removeFromBookmark 
+  } = useContext(PlantContext);
 
-  useEffect(() => {
-    fetch("")
-      .then((res) => res.json())
-      .then((data) => setPlants(data))
-      .catch(() => {
-        setPlants([
-          {
-            id: 1,
-            name: "Aloe Vera",
-            scientific: "Aloe barbadensis miller",
-            img: "/src/assets/money_plant.jpg",
-            desc:"Its easy to grow, requiring minimal water and thriving in warm, sunny conditions — making it a popular household plant as well as a key ingredient in skincare and health products."
-          },
-          {
-            id: 2,
-            name: "Tulsi",
-            scientific: "Ocimum tenuiflorum",
-            img: "/src/assets/expPlants.jpg",
-            desc:"Apart from its health uses, tulsi is also worshipped in many Indian households, symbolizing purity, protection, and spiritual harmony. Its commonly consumed as tulsi tea or used in herbal remedies."
-          },
-          {
-            id: 3,
-            name: "Neem",
-            scientific: "Azadirachta indica",
-            img: "/src/assets/Ayush.jpg",
-            desc:"In addition to health benefits, neem is also used as a natural pesticide and insect repellent, making it an eco-friendly choice in organic farming. Its often called the “village pharmacy” for its wide range of healing uses."
-          },
-        ]);
-      });
-  }, []);
+  // Filter plants that are bookmarked
+  const bookmarkedPlants = useMemo(() => {
+    const bookmarkedIds = Object.keys(bookmark).filter(id => bookmark[id] === true);
+    
+    return plants.filter(plant => {
+      const plantId = String(plant._id ?? plant.id);
+      return bookmarkedIds.includes(plantId);
+    });
+  }, [plants, bookmark]);
 
   return (
-    <div className="bg-[#e1eebc] h-full">
-        <div className="px-[3.7vw] pt-28">
-          <h2 className="font-itim text-3xl pl-5 pt-3 mb-5">BOOKMARKS :</h2>
-
-          <div className="flex flex-col gap-6 pb-8 px-5">
-            {plants.map((plant) => (
-              <div
-                key={plant.id}
-                className="border rounded-xl p-4 shadow-md bg-white hover:shadow-lg transition flex justify-between h-[40vh]"
+    <div className="bg-[#E1EEBC] w-full min-h-screen pb-[2vw]">
+      <div className="pt-[13vh] px-[5vw]">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4">
+          <div>
+            <h1 className="text-4xl font-itim text-gray-800">My Garden 🌿</h1>
+            <p className="text-lg text-gray-600 mt-1">
+              {bookmarkedPlants.length} {bookmarkedPlants.length === 1 ? 'plant' : 'plants'} in your collection
+            </p>
+          </div>
+          
+          {bookmarkedPlants.length > 0 && (
+            <div className="mt-4 sm:mt-0">
+              <select
+                id="sort"
+                className="border border-gray-600 rounded-full px-4 py-2 text-base bg-[#e5eccf] font-itim"
+                aria-label="Sort plants"
               >
+                <option value="recent">Recently Added</option>
+                <option value="name">Name (A-Z)</option>
+                <option value="scientific">Scientific Name</option>
+              </select>
+            </div>
+          )}
+        </div>
+      </div>
 
-                <div className="flex items-center gap-4">
-                  <img
-                    src={plant.img}
-                    alt={plant.name}
-                    className="w-80 h-80 rounded-lg object-cover border"
+      {/* Main content area */}
+      <div className="border bg-[#EAFFD8] border-gray-400 mx-[5vw] min-h-[70vh] rounded-2xl">
+        {/* Loading state */}
+        {(loading || bookmarksLoading) && (
+          <div className="flex items-center justify-center p-12">
+            <div className="text-lg text-gray-700">
+              {bookmarksLoading ? "Loading your bookmarks..." : "Loading plants..."}
+            </div>
+          </div>
+        )}
+
+        {/* Error state */}
+        {error && !loading && (
+          <div className="flex items-center justify-center p-12">
+            <div className="text-red-600">Error loading plants: {String(error)}</div>
+          </div>
+        )}
+
+        {/* Empty state - no bookmarks */}
+        {!loading && !bookmarksLoading && !error && bookmarkedPlants.length === 0 && (
+          <div className="flex flex-col items-center justify-center p-12 text-center">
+            <div className="text-6xl mb-4">🌱</div>
+            <h2 className="text-2xl font-itim text-gray-700 mb-2">Your garden is empty</h2>
+            <p className="text-gray-600 mb-6 max-w-md">
+              Start building your collection by bookmarking plants you love from the Explore page!
+            </p>
+            <a
+              href="/explore"
+              className="px-6 py-3 bg-green-600 text-white rounded-lg font-itim hover:bg-green-700 transition-colors"
+            >
+              Explore Plants
+            </a>
+          </div>
+        )}
+
+        {/* Bookmarked plants grid */}
+        {!loading && !bookmarksLoading && !error && bookmarkedPlants.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-6 sm:p-8">
+            {bookmarkedPlants.map((plant) => {
+              const plantId = String(plant._id ?? plant.id);
+              
+              return (
+                <div key={plantId} className="relative group">
+                  <PlantCard
+                    plant={plant}
+                    addToBookmark={addToBookmark}
                   />
-                  <div className="flex flex-col h-[35vh] gap-8 pt-0 mt-0 justify-between">
-                    <div className="mt-0">
-                      <h3 className="font-bold text-3xl mt-3 uppercase tracking-wide">
-                        {plant.name}
-                      </h3>
-                      <p className="text-lg text-gray-600 py-2">
-                        Scientific: {plant.scientific}
-                      </p>
-                      <p className="text-gray-600 text-base w-[50vw]">Description: {plant.desc}</p>
-                    </div>
-                    <div className="mb-5 flex items-center justify-between">
-                      <button className="px-4 py-1 bg-lime-200 rounded-full text-sm font-medium hover:bg-lime-300 transition w-[15vw] h-[5vh]">
-                        view details
-                      </button>
-                    </div>
-                  </div>
+                  
+                  {/* Remove button overlay */}
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      removeFromBookmark(plantId);
+                    }}
+                    className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600 shadow-lg z-10"
+                    title="Remove from garden"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
                 </div>
-            
-            
-                <button className="text-gray-500 hover:text-red-500">🗑</button>
-              </div>
-            ))}
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Stats section */}
+      {!loading && !error && bookmarkedPlants.length > 0 && (
+        <div className="mx-[5vw] mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+            <div className="text-sm text-gray-600">Total Plants</div>
+            <div className="text-2xl font-bold text-green-600">{bookmarkedPlants.length}</div>
+          </div>
+          
+          <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+            <div className="text-sm text-gray-600">Plant Types</div>
+            <div className="text-2xl font-bold text-green-600">
+              {new Set(bookmarkedPlants.map(p => p.type || 'Plant')).size}
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+            <div className="text-sm text-gray-600">Collection Status</div>
+            <div className="text-lg font-semibold text-green-600">
+              {bookmarkedPlants.length < 5 ? '🌱 Growing' : 
+               bookmarkedPlants.length < 15 ? '🌿 Thriving' : '🌳 Flourishing'}
+            </div>
           </div>
         </div>
+      )}
     </div>
   );
 };

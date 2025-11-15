@@ -1,22 +1,24 @@
+// src/app.js
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import errorMiddleware from "./middleware/Error.js";
+import morgan from "morgan";
+import path from "path";
+import { fileURLToPath } from "url";
+
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
-import multer from "multer";
+import plantRoutes from "./routes/plantRoutes.js";
+import bookmarkRoutes from "./routes/bookmarkRoutes.js";
+import externalPlantRoutes from "./routes/externalPlantRoutes.js";
+import { errorMiddleware } from "./middleware/Error.js";
 
-// const multer = require("multer");
-// const upload = multer({
-//   dest: "./upload",
-//   limits: {
-//     fileSize: 1000000,
-//   },
-// });
-
-// Config
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 
 // Middlewares
@@ -31,23 +33,24 @@ app.use(
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(morgan("dev"));
 
-// app.use(
-//   fileUpload({
-//     useTempFiles: true,
-//     tempFileDir: "/tmp/",
-//   })
-// );
+// Serve uploaded files (e.g. profile images) from /uploads
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/external-plants", externalPlantRoutes);
+app.use("/api/plants", plantRoutes);
+app.use("/api/bookmarks", bookmarkRoutes); // ✅ Only once
 
-// Test route
+// Health check
 app.get("/", (req, res) => {
   res.send("Server is live!");
 });
 
-// Error handling
+// Centralized error middleware (must be last)
 app.use(errorMiddleware);
+
 export default app;

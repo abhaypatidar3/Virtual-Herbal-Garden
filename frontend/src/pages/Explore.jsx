@@ -1,15 +1,18 @@
+// src/pages/Explore.jsx
 import React, { useContext } from "react";
+import { useSelector } from "react-redux";
 import PlantCard from "../components/PlantCard";
 import { PlantContext } from "../context/PlantContext";
 
 const Explore = () => {
   const { plants = [], loading, error, addToBookmark } = useContext(PlantContext);
+  const { isAuthenticated } = useSelector((state) => state.user);
 
   return (
     <div className="bg-[#E1EEBC] w-full h-full pb-[2vw]">
       <div className="pt-[13vh] pl-[5vw]">
         {/* top */}
-        <div className="flex flex-row gap-[1vw] pb-2">
+        <div className="flex flex-row gap-[1vw] pb-2 items-center">
           <p className="text-3xl font-itim ">Explore Plants:</p>
           <select
             id="filter"
@@ -19,16 +22,14 @@ const Explore = () => {
             <option value="filter" className="font-itim text-lg">
               FILTER
             </option>
-            <option value="filter" className="font-itim text-lg">
-              FILTER
-            </option>
-            <option value="filter" className="font-itim text-lg">
-              FILTER
-            </option>
-            <option value="filter" className="font-itim text-lg">
-              FILTER
-            </option>
           </select>
+          
+          {/* Login hint */}
+          {!isAuthenticated && (
+            <div className="ml-auto mr-[5vw] text-sm text-gray-600 bg-yellow-50 px-4 py-2 rounded-full border border-yellow-200">
+              💡 <a href="/login" className="underline hover:text-gray-900">Login</a> to bookmark plants
+            </div>
+          )}
         </div>
       </div>
 
@@ -55,17 +56,18 @@ const Explore = () => {
         {/* Plant cards */}
         {!loading &&
           !error &&
-          plants.map((plant) => (
-            <PlantCard
-              key={String(plant.id)}
-              id={plant.id}
-              name={plant.name}
-              SN={plant.scientific_name}
-              image={plant.images?.title || plant.images?.thumb || ""}
-              // optional: pass bookmark handler so the icon in PlantCard can call it
-              addToBookmark={() => addToBookmark(plant.id)}
-            />
-          ))}
+          plants.map((plant) => {
+            // Create stable key from available IDs
+            const stableKey = String(plant._id ?? plant.id ?? Math.random());
+            
+            return (
+              <PlantCard
+                key={stableKey}
+                plant={plant}
+                addToBookmark={addToBookmark}
+              />
+            );
+          })}
       </div>
     </div>
   );

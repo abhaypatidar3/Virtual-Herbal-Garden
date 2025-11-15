@@ -15,8 +15,10 @@ import stripe_logo from './stripe_logo.png'
 import cross_icon from './cross_icon.png'
 import bookmark from './bookmark.png'
 import bookmarked from './bookmarked.png'
+import aflogin from './aflogin.png'
 
 export const assets = {
+    aflogin,
     logo,
     cart_icon,
     dropdown_icon,
