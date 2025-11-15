@@ -36,8 +36,8 @@ const Navbar = () => {
       <div className='flex item-center gap-6'>
         <div className='flex item-center gap-6 py-3 group relative top-0  pb-0 h-[10px] mb-[50px]'>
             {
-              isAuthenticated ? (<img src={user.picture} alt="profile icon gayab" className='w-[41px] h-[41px] mr-4 rounded-full border border-black cursor-pointer right-0'/>
-              ) : (<img src={assets.profile_icon} alt="profile icon gayab" className='w-[55px] h-[35px] cursor-pointer right-0'/>)
+              isAuthenticated ? (<img src={user.picture} alt="." className='w-[41px] h-[41px] mr-4 rounded-full border border-black cursor-pointer right-0'/>
+              ) : (<img src={assets.profile_icon} alt="." className='w-[55px] h-[35px] cursor-pointer right-0'/>)
             }
             <div className='hidden group-hover:block absolute dropdown menu left-1 -translate-x-1/2 pt-10'>
                 <div className='flex flex-col w-[8vw] py-3 px-5 gap-2 bg-[#daebab] border border-gray-200 text-gray-600 rounded-lg'>

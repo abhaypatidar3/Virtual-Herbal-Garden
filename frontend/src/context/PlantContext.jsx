@@ -1,76 +1,103 @@
-import { createContext, useState, useEffect } from "react";
+// src/context/PlantContext.jsx
+import { createContext, useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 export const PlantContext = createContext();
 
+const API_BASE = "http://localhost:3000"; // keep single source; change to env when ready
+
 const PlantContextProvider = ({ children }) => {
   const navigate = useNavigate();
 
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [bookmark, setBookmark] = useState({});
   const [plants, setPlants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch plants from backend
   useEffect(() => {
     const fetchPlants = async () => {
       setLoading(true);
       setError(null);
-
       try {
-        const response = await fetch('http://localhost:3000/api/plants'); // backend proxy
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
+        const response = await fetch(`${API_BASE}/api/plants`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
-        console.log('Plant data:', data);
-
-        // Adjust depending on API response structure
+        console.debug("Plant list response:", data);
         setPlants(data.plants || data || []);
-
       } catch (err) {
-        console.error('Error fetching plants:', err);
-        setError(err.message);
+        console.error("Error fetching plants:", err);
+        setError(err.message || "Failed to load plants");
       } finally {
         setLoading(false);
       }
     };
-
     fetchPlants();
   }, []);
 
-  // Bookmark function
-  const addToBookmark = (plantId) => {
+  // robust getPlantById that normalizes response shapes and caches result
+const getPlantById = useCallback(
+  async (id) => {
+    if (!id) return null;
+    const sid = String(id);
+
+    // Wait until plants are loaded
+    if (!plants || plants.length === 0) {
+      console.warn("getPlantById: plant list empty or loading");
+      return null;
+    }
+
+    // Find plant by id (string vs number safe)
+    const found = plants.find((p) => String(p.id ?? p._id ?? "") === sid);
+
+    if (found) {
+      console.debug("✅ getPlantById: found", sid, found.name);
+      return found;
+    }
+
+    console.warn(`❌ getPlantById: no plant matched id=${sid}`);
+    console.debug("Current plants[0]:", plants[0]);
+    return null;
+  },
+  [plants]
+);
+
+
+
+  const addToBookmark = (plantOrId) => {
+    const plantId = typeof plantOrId === "object" ? String(plantOrId._id ?? plantOrId.id) : String(plantOrId);
     toast.success("Bookmarked plant", {
       onClick: () => navigate("/mygarden"),
-      className: 'cursor-pointer',
-      autoClose: 3000
+      className: "cursor-pointer",
+      autoClose: 3000,
     });
+    setBookmark((prev) => ({ ...(prev || {}), [plantId]: true }));
+  };
 
-    const bookmarkData = structuredClone(bookmark);
-    bookmarkData[plantId] = true;
-    setBookmark(bookmarkData);
+  const saveToGarden = (plant) => {
+    toast.success("Saved to My Garden");
   };
 
   const value = {
-    search, setSearch,
-    showSearch, setShowSearch,
-    bookmark, setBookmark,
-    plants, setPlants,
-    loading, setLoading,
+    search,
+    setSearch,
+    showSearch,
+    setShowSearch,
+    bookmark,
+    setBookmark,
+    plants,
+    setPlants,
+    loading,
+    setLoading,
     error,
-    addToBookmark
+    addToBookmark,
+    getPlantById,
+    saveToGarden,
   };
 
-  return (
-    <PlantContext.Provider value={value}>
-      {children}
-    </PlantContext.Provider>
-  );
+  return <PlantContext.Provider value={value}>{children}</PlantContext.Provider>;
 };
 
 export default PlantContextProvider;

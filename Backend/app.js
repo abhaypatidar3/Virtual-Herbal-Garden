@@ -2,7 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { ErrorHandler } from "./middleware/Error.js";
+import errorMiddleware from "./middleware/Error.js";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import multer from "multer";
@@ -49,5 +49,5 @@ app.get("/", (req, res) => {
 });
 
 // Error handling
-app.use(ErrorHandler);
+app.use(errorMiddleware);
 export default app;

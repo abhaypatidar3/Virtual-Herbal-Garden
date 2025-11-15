@@ -1,5 +1,4 @@
 // middleware/Error.js
-
 export class ErrorHandler extends Error {
   constructor(message, statusCode = 500) {
     super(message);
@@ -9,14 +8,9 @@ export class ErrorHandler extends Error {
 }
 
 const errorMiddleware = (err, req, res, next) => {
-  // ensure we have an Error object shape
   let customError = err;
 
-  // Defaults
-  const statusCode = err.statusCode || 500;
-  const message = err.message || "Internal server error";
-
-  // Handle specific known errors
+  // Known errors handling
   if (err.name === "CastError") {
     customError = new ErrorHandler(`Invalid ${err.path}`, 400);
   } else if (err.code === 11000) {
@@ -27,20 +21,20 @@ const errorMiddleware = (err, req, res, next) => {
   } else if (err.name === "TokenExpiredError" || err.name === "TokenExpired") {
     customError = new ErrorHandler("JSON Web Token has expired. Please login again.", 401);
   } else {
-    customError = new ErrorHandler(message, statusCode);
+    // keep incoming message / status if provided
+    customError = new ErrorHandler(err.message || "Internal server error", err.statusCode || 500);
   }
 
-  const responsePayload = {
+  const payload = {
     success: false,
     message: customError.message,
   };
 
-  // Include stack in development only
   if (process.env.NODE_ENV === "development") {
-    responsePayload.stack = err.stack;
+    payload.stack = err.stack;
   }
 
-  return res.status(customError.statusCode || 500).json(responsePayload);
+  return res.status(customError.statusCode || 500).json(payload);
 };
 
 export default errorMiddleware;

@@ -21,26 +21,23 @@ export const registerUser = async (req, res, next) => {
       return next(new ErrorHandler("User already exists", 400));
     }
 
-    // Hash password and save hashed password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const userData = {
+    // DO NOT hash here — let the model's pre('save') hash it
+    const user = await User.create({
       username,
       email,
-      password: hashedPassword,
+      password,               // plaintext: model will hash this
       profilePic: profilePic || undefined,
       role: "user",
-    };
+    });
 
-    const user = await User.create(userData);
-
-    // sendToken presumed to set cookie and/or return token
-    sendToken(user, 201, res, "User registered successfully");
+    // sendToken presumed to sanitize user and set cookie
+    return sendToken(user, 201, res, "User registered successfully");
   } catch (error) {
     console.error("Error registering user:", error);
-    next(new ErrorHandler("Server Error", 500));
+    return next(new ErrorHandler("Server Error", 500));
   }
 };
+
 
 export const loginUser = async (req, res, next) => {
   try {
