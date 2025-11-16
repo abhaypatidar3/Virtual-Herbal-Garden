@@ -34,11 +34,11 @@ const userSchema = new mongoose.Schema({
   bookmarks: [
     {
       // Changed to Mixed type to allow both ObjectId and String
-      // This allows bookmarking plants from external APIs
       type: mongoose.Schema.Types.Mixed,
-      // No ref needed since plants might be external
     },
   ],
+}, {
+  timestamps: true // Adds createdAt and updatedAt automatically
 });
 
 // Hash password before saving

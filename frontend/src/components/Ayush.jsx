@@ -40,7 +40,7 @@ const Ayush = () => {
         <div className='h-[40vh] w-[25vw] mx-[12vw] my-[10vh] sm:my-[30vh] flex flex-col gap-[5vh] justify-center'>
             <div>
               {
-                isAuthenticated ? (<div className='bg-black/60 border-slate-500 border w-[30vw] sm:w-[25vw] h-[20vh] sm:h-[10vh] mt-[2vh] rounded-3xl gap-0'><div className='font-itim text-white text-xl sm:text-4xl text-start px-[4vw] mt-[2vh] sm:mt-[25px]'>Hello, {user.username}</div></div>) : null
+                isAuthenticated ? (<div className='bg-black/60 border-slate-500 border w-[30vw] sm:w-[25vw] h-[20vh] sm:h-[10vh] mt-[2vh] rounded-3xl gap-0'><div className='font-itim text-white text-xl sm:text-4xl text-start px-[3vw] pl-[3vw] mt-[2vh] sm:mt-[25px]'>Hello, {user.username}</div></div>) : null
               }
             </div>
             <div>

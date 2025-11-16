@@ -1,11 +1,16 @@
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import fetch from "node-fetch";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import app from "./app.js";
 import { errorMiddleware } from "./middleware/Error.js";
-import bookmarkRoutes from "./routes/bookmarkRoutes.js";
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const PORT = process.env.PORT || 3000;
 
@@ -14,7 +19,18 @@ const opts = {
   dbName: process.env.MONGO_DB_NAME || "virtual_herbal_garden",
 };
 
-// 🌿 Connect MongoDB
+// ========================================
+// CREATE UPLOADS DIRECTORY
+// ========================================
+const uploadsDir = path.join(__dirname, "uploads", "profile");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log("📁 Created uploads/profile directory");
+}
+
+// ========================================
+// CONNECT TO MONGODB
+// ========================================
 mongoose
   .connect(process.env.MONGO_URI, opts)
   .then(() => console.log("✅ MongoDB connected:", mongoose.connection.name))
@@ -33,15 +49,20 @@ app.get("/api/plants", async (req, res, next) => {
     const data = await response.json();
     res.json(data);
   } catch (error) {
-    next(error); // ✅ Pass errors to errorMiddleware
+    next(error);
   }
 });
 
-// ✅ Attach error handler (important: must be last)
+// ✅ Attach error handler (must be last)
 app.use(errorMiddleware);
+
+// ========================================
+// START SERVER
+// ========================================
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
+
 mongoose.connection.once("open", async () => {
   console.log("✅ Connected to DB:", mongoose.connection.name);
   const users = await mongoose.connection.db

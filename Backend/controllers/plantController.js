@@ -1,124 +1,182 @@
-// controllers/plantController.js
+// controllers/PlantController.js
 import Plant from "../models/Plant.js";
 import { ErrorHandler } from "../middleware/Error.js";
-import cloudinary from "../config/cloudinary.js";
 
-// 🪴 Add new plant
-export const addPlant = async (req, res, next) => {
+// ========================================
+// GET ALL PLANTS (Admin - with pagination)
+// ========================================
+export const getAllPlantsAdmin = async (req, res, next) => {
   try {
-    const { name } = req.body;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || "";
 
-    if (!name) return next(new ErrorHandler("Plant name is required", 400));
-    if (!req.file?.path)
-      return next(new ErrorHandler("Image is required", 400));
+    const query = {};
+    
+    if (search) {
+      query.name = { $regex: search, $options: "i" };
+    }
 
-    const existing = await Plant.findOne({ name });
-    if (existing) return next(new ErrorHandler("Plant already exists", 400));
+    const total = await Plant.countDocuments(query);
+    const plants = await Plant.find(query)
+      .sort("-createdAt")
+      .limit(limit)
+      .skip((page - 1) * limit);
 
-    // Cloudinary already uploaded file → req.file.path is the URL
-    const imageUrl = req.file.path;
-
-    const plant = await Plant.create({ name, image: imageUrl });
-
-    res.status(201).json({
+    res.status(200).json({
       success: true,
-      message: "Plant added successfully",
-      plant,
+      plants,
+      pagination: {
+        total,
+        page,
+        pages: Math.ceil(total / limit),
+        limit
+      }
     });
   } catch (error) {
+    console.error("Error in getAllPlantsAdmin:", error);
     next(new ErrorHandler(error.message, 500));
   }
 };
 
-// 🌿 Delete plant
-export const deletePlant = async (req, res, next) => {
+// ========================================
+// GET SINGLE PLANT BY ID
+// ========================================
+export const getPlantById = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const { plantId } = req.params;
 
-    // Check if plant exists
-    const plant = await Plant.findById(id);
+    const plant = await Plant.findById(plantId);
+
     if (!plant) {
       return next(new ErrorHandler("Plant not found", 404));
     }
 
-    // 🌿 Delete image from Cloudinary if exists
-    if (plant.image) {
-      try {
-        // Extract Cloudinary public_id safely
-        const publicId = plant.image
-          .split("/")
-          .slice(-2)
-          .join("/")
-          .split(".")[0]; // e.g. "virtual_herbal_garden/tulsi"
-        await cloudinary.uploader.destroy(publicId);
-        console.log("🧹 Cloudinary image deleted:", publicId);
-      } catch (cloudErr) {
-        console.error("⚠️ Cloudinary delete error:", cloudErr.message);
-      }
-    }
-
-    // 🌱 Delete from MongoDB
-    await plant.deleteOne();
-
     res.status(200).json({
       success: true,
-      message: "Plant deleted successfully",
+      plant
     });
   } catch (error) {
+    console.error("Error in getPlantById:", error);
     next(new ErrorHandler(error.message, 500));
   }
 };
 
-// 🌾 Get all plants
-export const getPlants = async (req, res, next) => {
+// ========================================
+// CREATE NEW PLANT (Admin only)
+// ========================================
+export const createPlant = async (req, res, next) => {
   try {
-    const plants = await Plant.find().sort({ createdAt: -1 });
-    res.status(200).json({ success: true, plants });
-  } catch (error) {
-    next(new ErrorHandler(error.message, 500));
-  }
-};
-export const updatePlant = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const { name } = req.body;
+    const { name, image } = req.body;
 
-    const plant = await Plant.findById(id);
-    if (!plant) return next(new ErrorHandler("Plant not found", 404));
-
-    // Update name (if provided)
-    if (name) {
-      plant.name = name;
+    if (!name || !name.trim()) {
+      return next(new ErrorHandler("Plant name is required", 400));
     }
 
-    // Handle new image upload
-    if (req.file?.path) {
-      try {
-        // Delete old image from Cloudinary
-        if (plant.image) {
-          const publicId = plant.image
-            .split("/")
-            .slice(-2)
-            .join("/")
-            .split(".")[0]; // e.g. "virtual_herbal_garden/tulsi"
-          await cloudinary.uploader.destroy(publicId);
-        }
+    // Check if plant already exists
+    const existingPlant = await Plant.findOne({ name: name.trim() });
+    if (existingPlant) {
+      return next(new ErrorHandler("Plant with this name already exists", 400));
+    }
 
-        // Replace with new Cloudinary image
-        plant.image = req.file.path;
-      } catch (cloudErr) {
-        console.error("Cloudinary update error:", cloudErr.message);
+    const plant = await Plant.create({
+      name: name.trim(),
+      image: image || ""
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Plant created successfully",
+      plant
+    });
+  } catch (error) {
+    console.error("Error in createPlant:", error);
+    next(new ErrorHandler(error.message, 500));
+  }
+};
+
+// ========================================
+// UPDATE PLANT (Admin only)
+// ========================================
+export const updatePlant = async (req, res, next) => {
+  try {
+    const { plantId } = req.params;
+    const { name, image } = req.body;
+
+    const plant = await Plant.findById(plantId);
+
+    if (!plant) {
+      return next(new ErrorHandler("Plant not found", 404));
+    }
+
+    // Check for duplicate name if name is being changed
+    if (name && name !== plant.name) {
+      const existingPlant = await Plant.findOne({
+        name: name.trim(),
+        _id: { $ne: plantId }
+      });
+      if (existingPlant) {
+        return next(new ErrorHandler("Plant with this name already exists", 400));
       }
     }
 
-    await plant.save();
+    const updateData = {};
+    if (name) updateData.name = name.trim();
+    if (image !== undefined) updateData.image = image;
+
+    const updatedPlant = await Plant.findByIdAndUpdate(
+      plantId,
+      updateData,
+      { new: true, runValidators: true }
+    );
 
     res.status(200).json({
       success: true,
       message: "Plant updated successfully",
-      plant,
+      plant: updatedPlant
     });
   } catch (error) {
+    console.error("Error in updatePlant:", error);
+    next(new ErrorHandler(error.message, 500));
+  }
+};
+
+// ========================================
+// DELETE PLANT (Admin only)
+// ========================================
+export const deletePlant = async (req, res, next) => {
+  try {
+    const { plantId } = req.params;
+
+    const plant = await Plant.findByIdAndDelete(plantId);
+
+    if (!plant) {
+      return next(new ErrorHandler("Plant not found", 404));
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Plant deleted successfully"
+    });
+  } catch (error) {
+    console.error("Error in deletePlant:", error);
+    next(new ErrorHandler(error.message, 500));
+  }
+};
+
+// ========================================
+// GET ALL PLANTS (Public - no pagination)
+// ========================================
+export const getAllPlants = async (req, res, next) => {
+  try {
+    const plants = await Plant.find().sort("-createdAt");
+
+    res.status(200).json({
+      success: true,
+      plants
+    });
+  } catch (error) {
+    console.error("Error in getAllPlants:", error);
     next(new ErrorHandler(error.message, 500));
   }
 };

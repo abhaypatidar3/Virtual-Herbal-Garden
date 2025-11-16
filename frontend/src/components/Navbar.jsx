@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import logo from "../assets/VHG_logo.png";
 import { NavLink } from "react-router-dom";
 import { assets } from "../assets/assets";
-
+import { Link } from "react-router-dom";
 // Redux Auth
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "@/store/slices/userSlice";
@@ -106,6 +106,16 @@ const Navbar = () => {
           className="block sm:hidden w-5 cursor-pointer h-5 mt-4"
         />
       </div>
+
+      {isAuthenticated && user?.role === "super-admin" && (
+        <Link
+          to="/admin/dashboard"
+          className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+        >
+          <span>👑</span>
+          <span className="font-medium">Admin Panel</span>
+        </Link>
+      )}
 
       {/* Mobile Sidebar */}
       <div

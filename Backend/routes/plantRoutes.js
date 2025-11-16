@@ -1,16 +1,17 @@
 // routes/plantRoutes.js
 import express from "express";
-import multer from "multer";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import cloudinary from "../config/cloudinary.js";
 import { verifyToken, authorizeRoles } from "../middleware/AuthMiddleware.js";
 import {
-  addPlant,
-  deletePlant,
-  getPlants,
+  getAllPlants,
+  getPlantById,
+  createPlant,
   updatePlant,
-} from "../controllers/plantController.js";
+  deletePlant,
+} from "../controllers/PlantController.js";
 import upload from "../config/cloudinary.js";
+
 const router = express.Router();
 
 // ✅ Cloudinary storage setup
@@ -22,24 +23,44 @@ const storage = new CloudinaryStorage({
   },
 });
 
-// 🌿 Public
-router.get("/", getPlants);
+// ========================================
+// PUBLIC ROUTES
+// ========================================
 
-// 🪴 Super-admin only
+// Get all plants (public - no pagination)
+router.get("/", getAllPlants);
+
+// Get single plant by ID (public)
+router.get("/:plantId", getPlantById);
+
+// ========================================
+// ADMIN ROUTES (Super-admin only)
+// ========================================
+
+// Create new plant
 router.post(
   "/",
   verifyToken,
   authorizeRoles("super-admin"),
   upload.single("image"),
-  addPlant
+  createPlant
 );
+
+// Update plant
 router.put(
-  "/:id",
+  "/:plantId",
   verifyToken,
   authorizeRoles("super-admin"),
   upload.single("image"),
   updatePlant
 );
-router.delete("/:id", verifyToken, authorizeRoles("super-admin"), deletePlant);
+
+// Delete plant
+router.delete(
+  "/:plantId",
+  verifyToken,
+  authorizeRoles("super-admin"),
+  deletePlant
+);
 
 export default router;

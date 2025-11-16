@@ -12,6 +12,7 @@ import userRoutes from "./routes/userRoutes.js";
 import plantRoutes from "./routes/plantRoutes.js";
 import bookmarkRoutes from "./routes/bookmarkRoutes.js";
 import externalPlantRoutes from "./routes/externalPlantRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js"; // ✅ NEW
 import { errorMiddleware } from "./middleware/Error.js";
 
 dotenv.config();
@@ -43,7 +44,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/external-plants", externalPlantRoutes);
 app.use("/api/plants", plantRoutes);
-app.use("/api/bookmarks", bookmarkRoutes); // ✅ Only once
+app.use("/api/bookmarks", bookmarkRoutes);
+app.use("/api/admin", adminRoutes); // ✅ NEW - Admin panel routes
 
 // Health check
 app.get("/", (req, res) => {
