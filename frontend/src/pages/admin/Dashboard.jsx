@@ -15,12 +15,33 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-axios.defaults.baseURL = "http://localhost:3000";
-axios.defaults.withCredentials = true;
+// Configure axios
+const api = axios.create({
+  baseURL: "http://localhost:3000",
+  withCredentials: true,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// Add token to requests
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchDashboardStats();
@@ -29,10 +50,20 @@ const Dashboard = () => {
   const fetchDashboardStats = async () => {
     try {
       setLoading(true);
-      const { data } = await axios.get("/api/admin/dashboard/stats");
+      setError(null);
+      
+      console.log("🔍 Fetching dashboard stats...");
+      const { data } = await api.get("/api/admin/dashboard/stats");
+      
+      console.log("✅ Dashboard data received:", data);
       setStats(data.stats);
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to fetch stats");
+      console.error("❌ Dashboard fetch error:", error);
+      console.error("Error response:", error.response?.data);
+      
+      const errorMsg = error.response?.data?.message || error.message || "Failed to fetch stats";
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -40,8 +71,36 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex flex-col items-center justify-center h-screen gap-4">
         <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-emerald-600"></div>
+        <p className="text-gray-600">Loading dashboard...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen gap-4">
+        <div className="text-6xl">⚠️</div>
+        <div className="text-center max-w-md">
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Failed to Load Dashboard</h2>
+          <p className="text-red-600 mb-4">{error}</p>
+          <div className="text-sm text-gray-600 mb-4">
+            <p className="font-semibold mb-2">Common issues:</p>
+            <ul className="text-left list-disc list-inside space-y-1">
+              <li>Backend server not running</li>
+              <li>Not logged in as super-admin</li>
+              <li>AdminController not properly set up</li>
+              <li>Database connection issue</li>
+            </ul>
+          </div>
+          <button
+            onClick={fetchDashboardStats}
+            className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+          >
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }
@@ -49,7 +108,13 @@ const Dashboard = () => {
   if (!stats) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-600">Failed to load dashboard data</p>
+        <p className="text-gray-600">No data available</p>
+        <button
+          onClick={fetchDashboardStats}
+          className="mt-4 px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -57,35 +122,43 @@ const Dashboard = () => {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-800">Dashboard Overview</h1>
-        <p className="text-gray-600 mt-2">Welcome to your admin dashboard</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800">Dashboard Overview</h1>
+          <p className="text-gray-600 mt-2">Welcome to your admin dashboard</p>
+        </div>
+        <button
+          onClick={fetchDashboardStats}
+          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-2"
+        >
+          🔄 Refresh
+        </button>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Total Users"
-          value={stats.totalUsers}
+          value={stats.totalUsers || 0}
           icon="👥"
           color="bg-blue-500"
-          subtitle={`${stats.totalAdmins} admins`}
+          subtitle={`${stats.totalAdmins || 0} admins`}
         />
         <StatCard
           title="Total Plants"
-          value={stats.totalPlants}
+          value={stats.totalPlants || 0}
           icon="🌿"
           color="bg-emerald-500"
         />
         <StatCard
           title="Total Bookmarks"
-          value={stats.totalBookmarks}
+          value={stats.totalBookmarks || 0}
           icon="📑"
           color="bg-purple-500"
         />
         <StatCard
           title="New Users (7d)"
-          value={stats.recentUsers}
+          value={stats.recentUsers || 0}
           icon="🆕"
           color="bg-orange-500"
         />
@@ -116,7 +189,10 @@ const Dashboard = () => {
               </LineChart>
             </ResponsiveContainer>
           ) : (
-            <p className="text-gray-500 text-center py-12">No data available</p>
+            <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+              <div className="text-4xl mb-2">📊</div>
+              <p>No user growth data yet</p>
+            </div>
           )}
         </div>
 
@@ -141,7 +217,10 @@ const Dashboard = () => {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <p className="text-gray-500 text-center py-12">No bookmarks yet</p>
+            <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+              <div className="text-4xl mb-2">🔖</div>
+              <p>No bookmarks yet</p>
+            </div>
           )}
         </div>
       </div>
@@ -151,25 +230,31 @@ const Dashboard = () => {
         <h2 className="text-xl font-semibold text-gray-800 mb-4">
           🕒 Recent Activity
         </h2>
-        <div className="space-y-3">
-          {stats.topBookmarkedPlants?.slice(0, 5).map((plant, index) => (
-            <div
-              key={index}
-              className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0"
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">🌱</span>
-                <div>
-                  <p className="font-medium text-gray-800">{plant.plantName}</p>
-                  <p className="text-sm text-gray-500">
-                    {plant.bookmarkCount} bookmarks
-                  </p>
+        {stats.topBookmarkedPlants && stats.topBookmarkedPlants.length > 0 ? (
+          <div className="space-y-3">
+            {stats.topBookmarkedPlants.slice(0, 5).map((plant, index) => (
+              <div
+                key={index}
+                className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">🌱</span>
+                  <div>
+                    <p className="font-medium text-gray-800">{plant.plantName}</p>
+                    <p className="text-sm text-gray-500">
+                      {plant.bookmarkCount} bookmarks
+                    </p>
+                  </div>
                 </div>
+                <span className="text-emerald-600 font-semibold">Popular</span>
               </div>
-              <span className="text-emerald-600 font-semibold">Popular</span>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            <p>No recent activity</p>
+          </div>
+        )}
       </div>
 
       {/* Quick Actions */}

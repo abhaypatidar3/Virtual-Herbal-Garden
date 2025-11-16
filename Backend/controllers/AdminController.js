@@ -2,6 +2,12 @@
 import User from "../models/User.js";
 import Plant from "../models/Plant.js";
 import { ErrorHandler } from "../middleware/Error.js";
+import mongoose from "mongoose";
+
+// Helper function to validate ObjectId
+const isValidObjectId = (id) => {
+  return mongoose.Types.ObjectId.isValid(id);
+};
 
 // ========================================
 // DASHBOARD STATS
@@ -12,10 +18,25 @@ export const getDashboardStats = async (req, res, next) => {
     const totalAdmins = await User.countDocuments({ role: "super-admin" });
     const totalPlants = await Plant.countDocuments();
     
-    // Get users with bookmarks count
+    // Get users with bookmarks count - FIXED VERSION
     const usersWithBookmarks = await User.aggregate([
-      { $project: { bookmarkCount: { $size: "$bookmarks" } } },
-      { $group: { _id: null, total: { $sum: "$bookmarkCount" } } }
+      {
+        $project: {
+          bookmarkCount: {
+            $cond: {
+              if: { $isArray: "$bookmarks" },
+              then: { $size: "$bookmarks" },
+              else: 0
+            }
+          }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: "$bookmarkCount" }
+        }
+      }
     ]);
     const totalBookmarks = usersWithBookmarks[0]?.total || 0;
 
@@ -25,9 +46,21 @@ export const getDashboardStats = async (req, res, next) => {
       createdAt: { $gte: sevenDaysAgo }
     });
 
-    // Most bookmarked plants
+    // Most bookmarked plants - FIXED VERSION with ObjectId validation
     const bookmarkStats = await User.aggregate([
+      { $match: { bookmarks: { $exists: true, $ne: [] } } },
       { $unwind: "$bookmarks" },
+      { 
+        $addFields: {
+          isValidObjectId: {
+            $and: [
+              { $ne: ["$bookmarks", null] },
+              { $eq: [{ $type: "$bookmarks" }, "objectId"] }
+            ]
+          }
+        }
+      },
+      { $match: { isValidObjectId: true } },
       { $group: { _id: "$bookmarks", count: { $sum: 1 } } },
       { $sort: { count: -1 } },
       { $limit: 5 }
@@ -36,12 +69,31 @@ export const getDashboardStats = async (req, res, next) => {
     // Get plant names for top bookmarked
     const topBookmarkedPlants = await Promise.all(
       bookmarkStats.map(async (stat) => {
-        const plant = await Plant.findById(stat._id);
-        return {
-          plantId: stat._id,
-          plantName: plant?.name || "Unknown",
-          bookmarkCount: stat.count
-        };
+        try {
+          // Additional validation before querying
+          if (!isValidObjectId(stat._id)) {
+            console.warn(`Invalid plant ID in bookmarks: ${stat._id}`);
+            return {
+              plantId: stat._id,
+              plantName: "Invalid Plant ID",
+              bookmarkCount: stat.count
+            };
+          }
+          
+          const plant = await Plant.findById(stat._id);
+          return {
+            plantId: stat._id,
+            plantName: plant?.name || "Unknown Plant",
+            bookmarkCount: stat.count
+          };
+        } catch (error) {
+          console.error(`Error fetching plant ${stat._id}:`, error);
+          return {
+            plantId: stat._id,
+            plantName: "Error Loading Plant",
+            bookmarkCount: stat.count
+          };
+        }
       })
     );
 
@@ -109,15 +161,13 @@ export const getAllUsers = async (req, res, next) => {
       .limit(limit)
       .skip((page - 1) * limit);
 
-    // Add bookmark count to each user
-    const usersWithStats = await Promise.all(
-      users.map(async (user) => {
-        return {
-          ...user.toObject(),
-          bookmarkCount: user.bookmarks.length
-        };
-      })
-    );
+    // Add bookmark count to each user - FIXED VERSION
+    const usersWithStats = users.map((user) => {
+      return {
+        ...user.toObject(),
+        bookmarkCount: Array.isArray(user.bookmarks) ? user.bookmarks.length : 0
+      };
+    });
 
     res.status(200).json({
       success: true,
@@ -142,7 +192,10 @@ export const getUserById = async (req, res, next) => {
 
     const user = await User.findById(userId)
       .select("-password")
-      .populate("bookmarks");
+      .populate({
+        path: "bookmarks",
+        match: { _id: { $type: "objectId" } } // Only populate valid ObjectIds
+      });
 
     if (!user) {
       return next(new ErrorHandler("User not found", 404));
@@ -157,7 +210,7 @@ export const getUserById = async (req, res, next) => {
       user: {
         ...user.toObject(),
         accountAge,
-        bookmarkCount: user.bookmarks.length
+        bookmarkCount: Array.isArray(user.bookmarks) ? user.bookmarks.length : 0
       }
     });
   } catch (error) {
@@ -281,22 +334,40 @@ export const getAnalytics = async (req, res, next) => {
       }
     ]);
 
-    // Most active users (by bookmark count)
+    // Most active users (by bookmark count) - FIXED VERSION
     const mostActiveUsers = await User.aggregate([
       {
         $project: {
           username: 1,
           email: 1,
-          bookmarkCount: { $size: "$bookmarks" }
+          bookmarkCount: {
+            $cond: {
+              if: { $isArray: "$bookmarks" },
+              then: { $size: "$bookmarks" },
+              else: 0
+            }
+          }
         }
       },
       { $sort: { bookmarkCount: -1 } },
       { $limit: 10 }
     ]);
 
-    // Plant bookmark trends
+    // Plant bookmark trends - FIXED VERSION with ObjectId validation
     const plantBookmarkTrends = await User.aggregate([
+      { $match: { bookmarks: { $exists: true, $ne: [] } } },
       { $unwind: "$bookmarks" },
+      { 
+        $addFields: {
+          isValidObjectId: {
+            $and: [
+              { $ne: ["$bookmarks", null] },
+              { $eq: [{ $type: "$bookmarks" }, "objectId"] }
+            ]
+          }
+        }
+      },
+      { $match: { isValidObjectId: true } },
       { $group: { _id: "$bookmarks", count: { $sum: 1 } } },
       { $sort: { count: -1 } },
       { $limit: 10 }
@@ -304,12 +375,30 @@ export const getAnalytics = async (req, res, next) => {
 
     const plantsWithNames = await Promise.all(
       plantBookmarkTrends.map(async (item) => {
-        const plant = await Plant.findById(item._id);
-        return {
-          plantId: item._id,
-          plantName: plant?.name || "Unknown",
-          bookmarkCount: item.count
-        };
+        try {
+          if (!isValidObjectId(item._id)) {
+            console.warn(`Invalid plant ID in analytics: ${item._id}`);
+            return {
+              plantId: item._id,
+              plantName: "Invalid Plant ID",
+              bookmarkCount: item.count
+            };
+          }
+          
+          const plant = await Plant.findById(item._id);
+          return {
+            plantId: item._id,
+            plantName: plant?.name || "Unknown Plant",
+            bookmarkCount: item.count
+          };
+        } catch (error) {
+          console.error(`Error fetching plant ${item._id}:`, error);
+          return {
+            plantId: item._id,
+            plantName: "Error Loading Plant",
+            bookmarkCount: item.count
+          };
+        }
       })
     );
 
