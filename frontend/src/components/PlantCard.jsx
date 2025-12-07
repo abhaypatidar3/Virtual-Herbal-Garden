@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { assets } from "../assets/assets";
 import { PlantContext } from "../context/PlantContext";
 
+
 const PlantCard = ({ plant, addToBookmark }) => {
   const { bookmark = {} } = useContext(PlantContext);
   

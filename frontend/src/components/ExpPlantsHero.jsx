@@ -1,5 +1,5 @@
 import React from 'react'
-
+import { NavLink } from 'react-router-dom'
 const ExpPlantsHero = () => {
   return (
     <div className={`w-[100vw] bg-[url('src/assets/expPlants.jpg')] h-screen bg-cover bg-center border border-t-black`}>
@@ -10,9 +10,11 @@ const ExpPlantsHero = () => {
         <p className='font-itim text-2xl sm:text-3xl text-center px-0 sm:mx-[2vw] sm:pb-[5vh]'>
           Discover a diverse collection of medicinal and Ayurvedic plants with detailed information on their benefits, uses, and cultivation tips to help you embrace natural healing and wellness.
         </p>
-        <button className='bg-[#556B2F] font-itim w-[60vw] sm:w-[20vw] h-[7vh] rounded-3xl mx-[10vw] sm:mx-[15vw] text-2xl mt-8 sm:mt-0  text-white hover:bg-[#6B8E23] transition'>
-          Explore More
-        </button>
+        <NavLink to="/explore">
+          <p className='bg-[#556B2F] item-flex font-itim w-[60vw] sm:w-[20vw] h-[7vh] rounded-3xl mx-[10vw] sm:mx-[15vw] text-lg sm:text-xl lg:text-2xl mt-8 text-center py-4 text-white hover:bg-[#6B8E23] transition'>
+            Explore More
+          </p>
+        </NavLink>
       </div>
     </div>
   )
