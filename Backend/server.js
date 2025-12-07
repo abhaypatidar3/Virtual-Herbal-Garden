@@ -33,8 +33,14 @@ if (!fs.existsSync(uploadsDir)) {
 // ========================================
 mongoose
   .connect(process.env.MONGO_URI, opts)
-  .then(() => console.log("✅ MongoDB connected:", mongoose.connection.name))
-  .catch((err) => console.error("❌ MongoDB connection failed:", err));
+  .then(() => {
+    console.log("✅ MongoDB connected:", mongoose.connection.name);
+    console.log("📍 Database:", mongoose.connection.db.databaseName);
+  })
+  .catch((err) => {
+    console.error("❌ MongoDB connection failed:", err);
+    process.exit(1); // ✅ Exit on DB connection failure in production
+  });
 
 // Example external API route
 app.get("/api/plants", async (req, res, next) => {
@@ -61,14 +67,29 @@ app.use(errorMiddleware);
 // ========================================
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📍 Environment: ${process.env.NODE_ENV || "development"}`);
+  console.log(`🌐 CORS Origin: ${process.env.CORS_ORIGIN || process.env.FRONTEND_URL || "http://localhost:5173"}`);
 });
 
 mongoose.connection.once("open", async () => {
   console.log("✅ Connected to DB:", mongoose.connection.name);
-  const users = await mongoose.connection.db
-    .collection("users")
-    .find()
-    .toArray();
-  console.log("👥 Found users:", users.length);
-  if (users.length > 0) console.log("📋 Example user:", users[0]);
+  
+  // ✅ Only log user count in development
+  if (process.env.NODE_ENV !== "production") {
+    const users = await mongoose.connection.db
+      .collection("users")
+      .find()
+      .toArray();
+    console.log("👥 Found users:", users.length);
+    if (users.length > 0) console.log("📋 Example user:", users[0]);
+  }
+});
+
+// ✅ Handle graceful shutdown
+process.on("SIGTERM", () => {
+  console.log("👋 SIGTERM received, shutting down gracefully");
+  mongoose.connection.close(false, () => {
+    console.log("MongoDB connection closed");
+    process.exit(0);
+  });
 });
