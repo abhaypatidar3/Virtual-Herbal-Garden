@@ -1,11 +1,9 @@
 // src/store/slices/userSlice.js
 import { createSlice } from "@reduxjs/toolkit";
-import axios from "axios";
 import { toast } from "react-toastify";
 
-// Axios defaults
-axios.defaults.withCredentials = true;
-axios.defaults.baseURL = "http://localhost:3000";
+// api defaults
+import api from "@/config/api";
 
 const initialState = {
   loading: false,
@@ -108,7 +106,7 @@ export const {
 export const register = (data) => async (dispatch) => {
   dispatch(registerRequest());
   try {
-    const res = await axios.post("/api/auth/register", data, {
+    const res = await api.post("/api/auth/register", data, {
       headers: { "Content-Type": "application/json" },
     });
 
@@ -128,7 +126,7 @@ export const register = (data) => async (dispatch) => {
 export const login = (data) => async (dispatch) => {
   dispatch(loginRequest());
   try {
-    const res = await axios.post("/api/auth/login", data, {
+    const res = await api.post("/api/auth/login", data, {
       headers: { "Content-Type": "application/json" },
     });
 
@@ -146,7 +144,7 @@ export const login = (data) => async (dispatch) => {
 // Logout
 export const logout = () => async (dispatch) => {
   try {
-    const res = await axios.post("/api/auth/logout", {}, { withCredentials: true });
+    const res = await api.post("/api/auth/logout", {}, { withCredentials: true });
     dispatch(logoutSuccess());
     toast.success(res.data.message || "Logged out");
   } catch (err) {
@@ -160,7 +158,7 @@ export const logout = () => async (dispatch) => {
 export const fetchUser = () => async (dispatch) => {
   dispatch(fetchUserRequest()); // optional
   try {
-    const res = await axios.get("/api/auth/me"); // cookie sent automatically
+    const res = await api.get("/api/auth/me"); // cookie sent automatically
     // expected: { success: true, user: {...} }
     const payload = res.data;
     dispatch(fetchUserSuccess(payload.user || payload));
