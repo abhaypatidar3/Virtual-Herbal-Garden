@@ -2,35 +2,66 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { toast } from "react-toastify";
 import { logout, fetchUser } from "@/store/slices/userSlice";
 import { PlantContext } from "@/context/PlantContext";
 
-const API_BASE = "http://localhost:3000";
+const API_BASE = "https://virtual-herbal-garden-ccq6.onrender.com" || "http://localhost:3000";
 
-// ✅ Configure axios instance with credentials
-const api = axios.create({
-  baseURL: API_BASE,
-  withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-// ✅ Add token from localStorage to every request
-api.interceptors.request.use(
-  (config) => {
+// ✅ Fetch API wrapper with credentials and token
+const api = {
+  async request(endpoint, options = {}) {
     const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    
+    const config = {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+        ...options.headers,
+      },
+      credentials: "include",
+    };
+
+    try {
+      const response = await fetch(`${API_BASE}${endpoint}`, config);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Request failed");
+      }
+
+      return { data, status: response.status };
+    } catch (error) {
+      throw error;
     }
-    return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+
+  async get(endpoint) {
+    return this.request(endpoint, { method: "GET" });
+  },
+
+  async post(endpoint, body) {
+    return this.request(endpoint, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  async put(endpoint, body) {
+    return this.request(endpoint, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    });
+  },
+
+  async delete(endpoint, body) {
+    return this.request(endpoint, {
+      method: "DELETE",
+      ...(body && { body: JSON.stringify(body) }),
+    });
+  },
+};
 
 const MyProfile = () => {
   const navigate = useNavigate();
@@ -108,7 +139,6 @@ const MyProfile = () => {
     setLoading(true);
 
     try {
-      // ✅ Use configured api instance
       const response = await api.put("/api/users/profile", {
         username,
         email,
@@ -121,7 +151,7 @@ const MyProfile = () => {
       }
     } catch (error) {
       console.error("Profile update error:", error);
-      toast.error(error.response?.data?.message || "Failed to update profile");
+      toast.error(error.message || "Failed to update profile");
     } finally {
       setLoading(false);
     }
@@ -143,7 +173,6 @@ const MyProfile = () => {
     setLoading(true);
 
     try {
-      // ✅ Use configured api instance
       const response = await api.put("/api/users/password", {
         currentPassword,
         newPassword,
@@ -156,7 +185,7 @@ const MyProfile = () => {
         setConfirmPassword("");
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to change password");
+      toast.error(error.message || "Failed to change password");
     } finally {
       setLoading(false);
     }
@@ -171,9 +200,8 @@ const MyProfile = () => {
     setLoading(true);
 
     try {
-      // ✅ Use configured api instance
       const response = await api.delete("/api/users/account", {
-        data: { password: deletePassword },
+        password: deletePassword,
       });
 
       if (response.data.success) {
@@ -182,7 +210,7 @@ const MyProfile = () => {
         navigate("/");
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to delete account");
+      toast.error(error.message || "Failed to delete account");
     } finally {
       setLoading(false);
       setShowDeleteModal(false);
