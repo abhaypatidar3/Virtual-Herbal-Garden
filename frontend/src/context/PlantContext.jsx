@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 import axios from "axios";
 
 export const PlantContext = createContext();
-const API_BASE = "http://localhost:3000";
+const API_BASE = "https://virtual-herbal-garden-ccq6.onrender.com" || "http://localhost:3000";
 
 // Configure axios
 axios.defaults.withCredentials = true;
