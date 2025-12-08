@@ -3,14 +3,13 @@ import { createContext, useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import axios from "axios";
-
+import api from "@/config/api";
 export const PlantContext = createContext();
 const API_BASE = "https://virtual-herbal-garden-ccq6.onrender.com" || "http://localhost:3000";
 
-// Configure axios
-axios.defaults.withCredentials = true;
-axios.defaults.baseURL = API_BASE;
+// Configure api
+api.defaults.withCredentials = true;
+api.defaults.baseURL = API_BASE;
 
 // Helper function to normalize plant data structure
 const normalizePlant = (plant) => ({
@@ -96,7 +95,7 @@ const PlantContextProvider = ({ children }) => {
 
       setBookmarksLoading(true);
       try {
-        const response = await axios.get("/api/bookmarks");
+        const response = await api.get("/api/bookmarks");
         
         if (response.data.success) {
           // Backend returns array of plant IDs (strings or ObjectIds)
@@ -185,7 +184,7 @@ const PlantContextProvider = ({ children }) => {
       : String(plantOrId);
 
     try {
-      const response = await axios.post("/api/bookmarks", { plantId });
+      const response = await api.post("/api/bookmarks", { plantId });
       
       if (response.data.success) {
         toast.success("Bookmarked plant", {
@@ -222,7 +221,7 @@ const PlantContextProvider = ({ children }) => {
       : String(plantOrId);
 
     try {
-      const response = await axios.delete(`/api/bookmarks/${plantId}`);
+      const response = await api.delete(`/api/bookmarks/${plantId}`);
       
       if (response.data.success) {
         toast.info("Removed from bookmarks", {
