@@ -1,24 +1,75 @@
-import axios from "axios";
-
+// src/config/api.js
 export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
+// Create a fetch wrapper that mimics axios API
+const api = {
+  defaults: {
+    baseURL: API_BASE_URL,
+    withCredentials: true,
   },
-});
 
-api.interceptors.request.use(
-  (config) => {
+  async request(method, url, data = null, config = {}) {
     const token = localStorage.getItem("token");
+    
+    const headers = {
+      "Content-Type": "application/json",
+      ...config.headers,
+    };
+
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      headers.Authorization = `Bearer ${token}`;
     }
-    return config;
+
+    const fullUrl = url.startsWith('http') ? url : `${this.defaults.baseURL}${url}`;
+
+    const options = {
+      method,
+      headers,
+      credentials: this.defaults.withCredentials ? 'include' : 'same-origin',
+    };
+
+    if (data && method !== 'GET' && method !== 'HEAD') {
+      options.body = JSON.stringify(data);
+    }
+
+    try {
+      const response = await fetch(fullUrl, options);
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        const error = new Error(responseData.message || 'Request failed');
+        error.response = {
+          status: response.status,
+          data: responseData,
+        };
+        throw error;
+      }
+
+      return { data: responseData };
+    } catch (error) {
+      throw error;
+    }
   },
-  (error) => Promise.reject(error)
-);
+
+  get(url, config) {
+    return this.request('GET', url, null, config);
+  },
+
+  post(url, data, config) {
+    return this.request('POST', url, data, config);
+  },
+
+  put(url, data, config) {
+    return this.request('PUT', url, data, config);
+  },
+
+  delete(url, config) {
+    return this.request('DELETE', url, null, config);
+  },
+
+  patch(url, data, config) {
+    return this.request('PATCH', url, data, config);
+  },
+};
 
 export default api;
