@@ -1,10 +1,7 @@
 // src/pages/admin/Analytics.jsx
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { toast } from "react-toastify";
-
-const API_BASE = "http://localhost:3000";
-axios.defaults.withCredentials = true;
+import api from "@/config/api";
 
 const Analytics = () => {
   const [analytics, setAnalytics] = useState(null);
@@ -20,7 +17,7 @@ const Analytics = () => {
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE}/api/admin/analytics`, {
+      const response = await api.get("/api/admin/analytics", {
         params: { period }
       });
 
@@ -36,7 +33,7 @@ const Analytics = () => {
 
   const fetchLogs = async () => {
     try {
-      const response = await axios.get(`${API_BASE}/api/admin/logs`);
+      const response = await api.get("/api/admin/logs");
       if (response.data.success) {
         setLogs(response.data.logs);
       }

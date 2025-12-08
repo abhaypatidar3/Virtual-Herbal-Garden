@@ -1,11 +1,8 @@
 // src/pages/admin/UserManagement.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { toast } from "react-toastify";
-
-const API_BASE = "http://localhost:3000";
-axios.defaults.withCredentials = true;
+import api from "@/config/api";
 
 const UserManagement = () => {
   const navigate = useNavigate();
@@ -25,7 +22,7 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE}/api/admin/users`, {
+      const response = await api.get("/api/admin/users", {
         params: {
           page: pagination.page,
           limit: 10,
@@ -49,7 +46,7 @@ const UserManagement = () => {
     if (!userToDelete) return;
 
     try {
-      const response = await axios.delete(`${API_BASE}/api/admin/users/${userToDelete._id}`);
+      const response = await api.delete(`/api/admin/users/${userToDelete._id}`);
       
       if (response.data.success) {
         toast.success("User deleted successfully");
@@ -64,7 +61,7 @@ const UserManagement = () => {
 
   const handleUpdateUser = async (userId, updates) => {
     try {
-      const response = await axios.put(`${API_BASE}/api/admin/users/${userId}`, updates);
+      const response = await api.put(`/api/admin/users/${userId}`, updates);
       
       if (response.data.success) {
         toast.success("User updated successfully");

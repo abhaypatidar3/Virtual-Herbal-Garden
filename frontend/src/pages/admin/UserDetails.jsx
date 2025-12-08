@@ -1,11 +1,8 @@
 // src/pages/admin/UserDetails.jsx
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
 import { toast } from "react-toastify";
-
-const API_BASE = "http://localhost:3000";
-axios.defaults.withCredentials = true;
+import api from "@/config/api";
 
 const UserDetails = () => {
   const { userId } = useParams();
@@ -20,7 +17,7 @@ const UserDetails = () => {
   const fetchUserDetails = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE}/api/admin/users/${userId}`);
+      const response = await api.get(`/api/admin/users/${userId}`);
       
       if (response.data.success) {
         setUser(response.data.user);

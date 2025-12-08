@@ -1,7 +1,7 @@
 // src/pages/admin/Dashboard.jsx
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { toast } from "react-toastify";
+import api from "@/config/api";
 import {
   LineChart,
   Line,
@@ -14,29 +14,6 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-
-// Configure axios
-const api = axios.create({
-  baseURL: "http://localhost:3000",
-  withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-// Add token to requests
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
 
 const Dashboard = () => {
   const [stats, setStats] = useState(null);

@@ -1,10 +1,7 @@
 // src/pages/admin/PlantManagement.jsx
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { toast } from "react-toastify";
-
-axios.defaults.baseURL = "http://localhost:3000";
-axios.defaults.withCredentials = true;
+import api from "@/config/api";
 
 const PlantManagement = () => {
   const [plants, setPlants] = useState([]);
@@ -32,7 +29,7 @@ const PlantManagement = () => {
   const fetchPlants = async () => {
     try {
       setLoading(true);
-      const { data } = await axios.get("/api/admin/plants", {
+      const { data } = await api.get("/api/admin/plants", {
         params: {
           page: pagination.page,
           limit: pagination.limit,
@@ -59,11 +56,11 @@ const PlantManagement = () => {
     try {
       if (editingPlant) {
         // Update plant
-        await axios.put(`/api/admin/plants/${editingPlant._id}`, formData);
+        await api.put(`/api/admin/plants/${editingPlant._id}`, formData);
         toast.success("Plant updated successfully");
       } else {
         // Create plant
-        await axios.post("/api/admin/plants", formData);
+        await api.post("/api/admin/plants", formData);
         toast.success("Plant created successfully");
       }
       closeModal();
@@ -77,7 +74,7 @@ const PlantManagement = () => {
     if (!window.confirm("Are you sure you want to delete this plant?")) return;
 
     try {
-      await axios.delete(`/api/admin/plants/${plantId}`);
+      await api.delete(`/api/admin/plants/${plantId}`);
       toast.success("Plant deleted successfully");
       fetchPlants();
     } catch (error) {
